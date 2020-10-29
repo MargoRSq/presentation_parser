@@ -14,6 +14,8 @@ url = input()
 
 your_dir = os.path.dirname(os.path.abspath(__file__))
 
+print('waiting...')
+
 page_num = 1
 
 while True:
