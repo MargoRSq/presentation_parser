@@ -8,3 +8,5 @@ lec_8_29_10_informatika.pdf
 svg/
 
 *.pdf
+
+__pycache__/
