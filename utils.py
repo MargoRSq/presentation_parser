@@ -1,5 +1,6 @@
 import os
 import requests
+import shutil
 
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF, renderPM
@@ -41,13 +42,26 @@ def svgs_to_pdf(pdf_filename, page_num):
     where_to = os.path.join(your_dir, f'{pdf_filename}.pdf')
     mergedObject.write(where_to)
 
-def check_dir():
-    directory_svg = 'svg'
-    directory_pdf = 'pdf'
 
-    for directory in [directory_svg, directory_pdf]:
-        path = os.path.join(your_dir, directory)
-        try: 
-            os.mkdir(path) 
-        except OSError:
-            pass
+
+def check_dir(func):
+    def the_wrapper_around_the_original_function():
+        directory_svg = 'svg'
+        directory_pdf = 'pdf'
+
+        for directory in [directory_svg, directory_pdf]:
+            path = os.path.join(your_dir, directory)
+            try: 
+                os.mkdir(path) 
+            except OSError:
+                pass
+        
+        func()
+
+        for directory in [directory_svg, directory_pdf]:
+            path = os.path.join(your_dir, directory)
+            try: 
+                shutil.rmtree(path) 
+            except OSError as e:
+                print(e.strerror)
+    return the_wrapper_around_the_original_function
