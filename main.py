@@ -1,23 +1,53 @@
-from utils import fetch_svg, svgs_to_pdf, check_dir, page_counter
+import os
+import shutil
 
-# url should look like: 
+from utils import fetch_svg, svgs_to_pdf
+from requests.exceptions import MissingSchema
+
+# url should look like:
 # https://vks.mtuci.ru/bigbluebutton/presentation/ab6cc0297149c9405a484f5f9ffbaa832aba4b6a-1603952740478/ab6cc0297149c9405a484f5f9ffbaa832aba4b6a-1603952740478/13330e66012653a79b1e2abb1ee9220d9be2f846-1603952786841/svg/
 
-@check_dir
-def main():
 
-    print('enter url')
-    url = input()
+def parse(url, pdf_filename):
 
-    fetch_svg(url, 1)
-    from utils import page_counter
+    your_dir = os.path.dirname(os.path.abspath(__file__))
 
-    print('enter output pdf filename')
-    pdf_filename = input()
+    directory_svg = 'svg'
+    directory_pdf = 'pdf'
 
-    svgs_to_pdf(pdf_filename, page_counter + 1)
+    for directory in [directory_svg, directory_pdf]:
+        path = os.path.join(your_dir, directory)
 
-    print('done!')
+        try:
+            os.mkdir(path)
+        except OSError:
+            pass
+
+    page_counter = fetch_svg(url)
+
+    if page_counter > 0:
+
+        svgs_to_pdf(pdf_filename, page_counter)
+
+        for directory in [directory_svg, directory_pdf]:
+            path = os.path.join(your_dir, directory)
+
+            try:
+                shutil.rmtree(path)
+            except OSError as e:
+                print(e.strerror)
+        print(f'Parsing {pdf_filename} is done!!')
+
+    else:
+        print('что-то пошло не так, проверьте ссылку')
+
 
 if __name__ == '__main__':
-    main()
+    print('введите url до .../svg/')
+    url = input()
+    print('введите название pdf файла')
+    pdf_name = input()
+    try:
+        parse(url, pdf_name)
+    except MissingSchema as error:
+        print(error)

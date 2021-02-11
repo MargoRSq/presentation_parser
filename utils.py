@@ -8,23 +8,24 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 
 
 your_dir = os.path.dirname(os.path.abspath(__file__))
-page_counter = 0
 
 
-def fetch_svg(url, page_num):
-    global page_counter
+def fetch_svg(url, page_num=1, page_counter=0):
 
-    response = requests.get(url + str(page_num))
+    response = requests.get(url + str(1))
 
-    if response.status_code == 200:
+    while response.status_code == 200:
+
+        response = requests.get(url + str(page_num))
         absolute = os.path.join(your_dir, f'svg\\{page_num}.svg')
+
+        page_num += 1
+        page_counter += 1
 
         with open(absolute, 'w+') as f:
             f.write(response.text)
 
-        page_num += 1
-        page_counter += 1
-        fetch_svg(url, page_num)
+    return page_counter
 
 
 def svgs_to_pdf(pdf_filename, page_num):
@@ -33,7 +34,7 @@ def svgs_to_pdf(pdf_filename, page_num):
     for page in range(1, page_num):
         path_to_svg = os.path.join(your_dir, 'svg/')
         path_to_pdf = os.path.join(your_dir, 'pdf/')
-        
+
         drawing = svg2rlg(path_to_svg + f'{page}.svg')
 
         renderPDF.drawToFile(drawing, path_to_pdf + f'{page}.pdf')
@@ -41,27 +42,3 @@ def svgs_to_pdf(pdf_filename, page_num):
 
     where_to = os.path.join(your_dir, f'{pdf_filename}.pdf')
     mergedObject.write(where_to)
-
-
-
-def check_dir(func):
-    def the_wrapper_around_the_original_function():
-        directory_svg = 'svg'
-        directory_pdf = 'pdf'
-
-        for directory in [directory_svg, directory_pdf]:
-            path = os.path.join(your_dir, directory)
-            try: 
-                os.mkdir(path) 
-            except OSError:
-                pass
-        
-        func()
-
-        for directory in [directory_svg, directory_pdf]:
-            path = os.path.join(your_dir, directory)
-            try: 
-                shutil.rmtree(path) 
-            except OSError as e:
-                print(e.strerror)
-    return the_wrapper_around_the_original_function
