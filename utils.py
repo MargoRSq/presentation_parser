@@ -1,44 +1,31 @@
 import os
 import requests
-import shutil
+import io
 
 from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPDF, renderPM
+from reportlab.graphics import renderPDF
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 
-your_dir = os.path.dirname(os.path.abspath(__file__))
-
-
-def fetch_svg(url, page_num=1, page_counter=0):
-
-    response = requests.get(url + str(1))
-
-    while response.status_code == 200:
-
-        response = requests.get(url + str(page_num))
-        absolute = os.path.join(your_dir, f'svg\\{page_num}.svg')
-
-        page_num += 1
-        page_counter += 1
-
-        with open(absolute, 'w+') as f:
-            f.write(response.text)
-
-    return page_counter
-
-
-def svgs_to_pdf(pdf_filename, page_num):
+def converter(url: str, pdf_filename: str, dir: str) -> None:
     mergedObject = PdfFileMerger()
 
-    for page in range(1, page_num):
-        path_to_svg = os.path.join(your_dir, 'svg/')
-        path_to_pdf = os.path.join(your_dir, 'pdf/')
+    response = requests.get(url + str(1))
+    if response.status_code == 200:
+        page_num = 0
 
-        drawing = svg2rlg(path_to_svg + f'{page}.svg')
+        while response.status_code == 200:
 
-        renderPDF.drawToFile(drawing, path_to_pdf + f'{page}.pdf')
-        mergedObject.append(PdfFileReader(path_to_pdf + f'{page}.pdf', 'rb'))
+            page_num += 1
+            response = requests.get(url + str(page_num))
+            
+            if response.status_code == 200:
+                svg = io.BytesIO(response.content)
+                drawing = svg2rlg(svg)
+                
+                pdf = io.BytesIO(renderPDF.drawToString(drawing))
 
-    where_to = os.path.join(your_dir, f'{pdf_filename}.pdf')
-    mergedObject.write(where_to)
+                mergedObject.append(PdfFileReader(pdf))
+
+    mergedObject.write(dir + f'\pdf\{pdf_filename}.pdf')
+        
